@@ -450,7 +450,8 @@ export function getLatestTimestamp(
   points: ChainControlPoint[],
   key: "recordTimestamp" | "statusTimestamp"
 ): string | null {
-  let latest: { value: string; epoch: number } | null = null;
+  let latestValue: string | null = null;
+  let latestEpoch = Number.NEGATIVE_INFINITY;
 
   points.forEach((point) => {
     const timestamp = point[key];
@@ -458,14 +459,13 @@ export function getLatestTimestamp(
       return;
     }
     const epoch = parseTimestamp(timestamp);
-    if (epoch !== null) {
-      if (!latest || epoch > latest.epoch) {
-        latest = { value: timestamp, epoch };
-      }
+    if (epoch !== null && epoch > latestEpoch) {
+      latestEpoch = epoch;
+      latestValue = timestamp;
     }
   });
 
-  return latest?.value ?? null;
+  return latestValue;
 }
 
 export function formatTimestamp(timestamp: string | null): string {
