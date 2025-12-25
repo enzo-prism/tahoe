@@ -172,6 +172,18 @@ function AboutDataDetails({ className }: { className?: string }) {
 }
 
 export default function Page() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50" />
+      }
+    >
+      <PageContent />
+    </React.Suspense>
+  );
+}
+
+function PageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = React.useState<ViewMode>("summary");
