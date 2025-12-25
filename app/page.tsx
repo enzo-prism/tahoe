@@ -384,8 +384,7 @@ export default function Page() {
               Bay Area ↔ Lake Tahoe Road Safety
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Live Caltrans chain control updates for I-80, US-50, and key Tahoe routes. Refreshes
-              every 60 seconds.
+              Live Caltrans chain control updates for I-80, US-50, and key Tahoe routes.
             </p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
