@@ -82,7 +82,7 @@ export function ChainControlMap({
       initialViewState={{ bounds: DEFAULT_BOUNDS, fitBoundsOptions: { padding: 80 } }}
       onLoad={() => setMapReady(true)}
       onClick={() => onSelectPoint(null)}
-      className="h-full w-full"
+      style={{ width: "100%", height: "100%" }}
       reuseMaps
     >
       <NavigationControl position="bottom-right" showCompass={false} />

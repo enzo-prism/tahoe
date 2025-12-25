@@ -3,6 +3,7 @@ import { IBM_Plex_Sans } from "next/font/google";
 
 import { cn } from "@/lib/utils";
 import "./globals.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],

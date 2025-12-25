@@ -17,6 +17,7 @@ import {
   groupPointsByCorridor,
   sortPoints
 } from "@/lib/chainControls";
+import { getMapStyleUrl } from "@/lib/mapStyle";
 import type {
   ChainControlPoint,
   ChainControlResponse,
@@ -97,7 +98,7 @@ const STATUS_BADGE_CLASSES: Record<SeverityLevel, string> = {
 
 export default function Page() {
   const [direction, setDirection] = React.useState<Direction>("bay-to-tahoe");
-  const [viewMode, setViewMode] = React.useState<ViewMode>("list");
+  const [viewMode, setViewMode] = React.useState<ViewMode>("map");
   const [routeFilter, setRouteFilter] = React.useState<RouteFilter>("All");
   const [corridorFocus, setCorridorFocus] = React.useState<CorridorKey | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -107,11 +108,7 @@ export default function Page() {
   const [error, setError] = React.useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-
-  const mapTilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-  const mapStyleUrl = mapTilerKey
-    ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${mapTilerKey}`
-    : "https://demotiles.maplibre.org/style.json";
+  const mapStyle = getMapStyleUrl();
 
   const fetchData = React.useCallback(async () => {
     setIsRefreshing(true);
@@ -329,19 +326,105 @@ export default function Page() {
           </Alert>
         )}
 
-        <CorridorSafety
-          summaries={corridorSummaries}
-          onViewDetails={handleViewDetails}
-          isRefreshing={isRefreshing}
-        />
-
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
           <TabsList className="w-full justify-start">
-            <TabsTrigger value="list">List</TabsTrigger>
             <TabsTrigger value="map">Map</TabsTrigger>
+            <TabsTrigger value="list">List</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="map" className="space-y-6">
+            {mapStyle.source === "maplibre-demo" ? (
+              <Alert className="border-border/60 bg-white/80">
+                <AlertDescription className="text-xs text-muted-foreground">
+                  Using demo tiles. Set NEXT_PUBLIC_MAPTILER_KEY for production styling.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <Card className="relative overflow-hidden border-border/60">
+              <CardContent className="p-0">
+                <div className="relative h-[70vh] min-h-[420px]">
+                  <ChainControlMap
+                    points={routePoints}
+                    selectedPoint={selectedPoint}
+                    onSelectPoint={setSelectedPoint}
+                    fitKey={routeFilter}
+                    mapStyleUrl={mapStyle.url}
+                  />
+
+                  <div className="absolute left-4 top-4 z-10 w-[260px] space-y-3">
+                    <Card className="bg-white/90 backdrop-blur">
+                      <CardContent className="space-y-3 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Corridor filter
+                        </p>
+                        <RadioGroup
+                          value={routeFilter}
+                          onValueChange={(value) => handleRouteChange(value as RouteFilter)}
+                          aria-label="Map corridor filter"
+                          className="grid grid-cols-2 gap-2"
+                        >
+                          {ROUTE_FILTERS.map((route) => (
+                            <div key={`map-${route}`} className="flex items-center">
+                              <RadioGroupItem
+                                value={route}
+                                id={`map-route-${route}`}
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor={`map-route-${route}`}
+                                className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-2 py-1 text-[0.65rem] font-semibold text-foreground shadow-sm transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
+                              >
+                                {route}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={fetchData}
+                          disabled={isRefreshing}
+                        >
+                          {isRefreshing ? "Refreshing..." : "Refresh now"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="absolute right-4 top-4 z-10 w-[220px]">
+                    <MapLegend />
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 z-10 rounded-full bg-white/80 px-3 py-1 text-[0.7rem] text-muted-foreground shadow-sm">
+                    {updatedAt
+                      ? `Last updated ${formatTimestamp(updatedAt)}`
+                      : "Fetching latest data..."}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PointDetailsSheet
+              point={selectedPoint}
+              corridorKey={selectedPoint ? getCorridorKeyForRoute(selectedPoint.route) : null}
+              open={Boolean(selectedPoint)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setSelectedPoint(null);
+                }
+              }}
+              onViewCorridor={handleViewCorridorFromMap}
+              onJumpToTable={handleJumpToTable}
+            />
+          </TabsContent>
+
           <TabsContent value="list" className="space-y-6">
+            <CorridorSafety
+              summaries={corridorSummaries}
+              onViewDetails={handleViewDetails}
+              isRefreshing={isRefreshing}
+            />
+
             <Tabs value={direction} onValueChange={(value) => setDirection(value as Direction)}>
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="bay-to-tahoe">Bay → Tahoe</TabsTrigger>
@@ -387,85 +470,6 @@ export default function Page() {
                 />
               </TabsContent>
             </Tabs>
-          </TabsContent>
-
-          <TabsContent value="map" className="space-y-6">
-            <Card className="relative overflow-hidden border-border/60">
-              <CardContent className="p-0">
-                <div className="relative h-[70vh] min-h-[420px]">
-                  <ChainControlMap
-                    points={routePoints}
-                    selectedPoint={selectedPoint}
-                    onSelectPoint={setSelectedPoint}
-                    fitKey={routeFilter}
-                    mapStyleUrl={mapStyleUrl}
-                  />
-
-                  <div className="absolute left-4 top-4 z-10 w-[260px] space-y-3">
-                    <Card className="bg-white/90 backdrop-blur">
-                      <CardContent className="space-y-3 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Corridor filter
-                        </p>
-                        <RadioGroup
-                          value={routeFilter}
-                          onValueChange={(value) => handleRouteChange(value as RouteFilter)}
-                          aria-label="Map corridor filter"
-                          className="grid grid-cols-2 gap-2"
-                        >
-                          {ROUTE_FILTERS.map((route) => (
-                            <div key={`map-${route}`} className="flex items-center">
-                              <RadioGroupItem
-                                value={route}
-                                id={`map-route-${route}`}
-                                className="peer sr-only"
-                              />
-                              <Label
-                                htmlFor={`map-route-${route}`}
-                                className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-2 py-1 text-[0.65rem] font-semibold text-foreground shadow-sm transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
-                              >
-                                {route}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={fetchData}
-                          disabled={isRefreshing}
-                        >
-                          {isRefreshing ? "Refreshing..." : "Refresh now"}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="absolute right-4 top-4 z-10 w-[220px]">
-                    <MapLegend isUsingDemoTiles={!mapTilerKey} />
-                  </div>
-
-                  <div className="absolute bottom-4 left-4 z-10 rounded-full bg-white/80 px-3 py-1 text-[0.7rem] text-muted-foreground shadow-sm">
-                    {updatedAt
-                      ? `Last updated ${formatTimestamp(updatedAt)}`
-                      : "Fetching latest data..."}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <PointDetailsSheet
-              point={selectedPoint}
-              corridorKey={selectedPoint ? getCorridorKeyForRoute(selectedPoint.route) : null}
-              open={Boolean(selectedPoint)}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setSelectedPoint(null);
-                }
-              }}
-              onViewCorridor={handleViewCorridorFromMap}
-              onJumpToTable={handleJumpToTable}
-            />
           </TabsContent>
         </Tabs>
       </div>

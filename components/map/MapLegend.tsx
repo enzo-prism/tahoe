@@ -9,11 +9,7 @@ const SEVERITY_BADGE_CLASSES = {
   RED: "border-red-200 bg-red-100 text-red-900"
 };
 
-interface MapLegendProps {
-  isUsingDemoTiles: boolean;
-}
-
-export function MapLegend({ isUsingDemoTiles }: MapLegendProps) {
+export function MapLegend() {
   return (
     <Card className="bg-white/90 backdrop-blur">
       <CardHeader className="pb-2">
@@ -56,11 +52,6 @@ export function MapLegend({ isUsingDemoTiles }: MapLegendProps) {
           </Badge>
           <span>Avoid / Delay</span>
         </div>
-        {isUsingDemoTiles ? (
-          <p className="text-[0.7rem] text-muted-foreground">
-            Demo tiles in use. Set NEXT_PUBLIC_MAPTILER_KEY for production styling.
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );

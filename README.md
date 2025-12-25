@@ -22,8 +22,9 @@ The API route `/api/chain-controls` merges both feeds and refreshes every 60 sec
 
 The map uses MapLibre via `@vis.gl/react-maplibre` and plots chain control points by severity.
 
-- For best tiles, set `NEXT_PUBLIC_MAPTILER_KEY` and the app will use MapTiler's Streets v2 style.
-- Without a key, it falls back to a public demo style (suitable for local development only).
+- Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_MAPTILER_KEY` to enable the
+  production MapTiler Streets v2 basemap.
+- Without a key, the app falls back to the MapLibre demo style and shows a dev-only notice.
 - Selecting a marker opens a detail sheet with status, updates, and actions to filter the corridor or jump to the table.
 
 ## Corridor severity + score
