@@ -15,6 +15,7 @@ import {
   getCorridorKeyForRoute,
   getLatestTimestamp,
   getSeverityForStatus,
+  getUnmappedAlerts,
   groupPointsByCorridor,
   sortPoints
 } from "@/lib/chainControls";
@@ -65,6 +66,7 @@ import { CorridorSafety } from "@/components/corridor-safety";
 import { DecisionBanner } from "@/components/decision-banner";
 import { ChainControlMap } from "@/components/map/ChainControlMap";
 import { MapLegend } from "@/components/map/MapLegend";
+import { UnmappedAlertsPanel } from "@/components/map/UnmappedAlertsPanel";
 import { PointDetailsSheet } from "@/components/map/PointDetailsSheet";
 import { Info } from "lucide-react";
 
@@ -156,6 +158,7 @@ export default function Page() {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isMapControlsOpen, setIsMapControlsOpen] = React.useState(false);
+  const [stalePointNotice, setStalePointNotice] = React.useState<string | null>(null);
   const mapStyle = getMapStyleUrl();
 
   const fetchData = React.useCallback(async () => {
@@ -192,12 +195,21 @@ export default function Page() {
     const match = points.find((point) => point.index === selectedPoint.index);
     if (!match) {
       setSelectedPoint(null);
+      setStalePointNotice("That alert is no longer active and has been removed from the live feed.");
       return;
     }
     if (match !== selectedPoint) {
       setSelectedPoint(match);
     }
   }, [points, selectedPoint]);
+
+  React.useEffect(() => {
+    if (!stalePointNotice) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setStalePointNotice(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [stalePointNotice]);
 
   React.useEffect(() => {
     if (viewMode === "list" && selectedPoint) {
@@ -237,6 +249,11 @@ export default function Page() {
 
   const routePoints = React.useMemo(
     () => filterPointsForRoute(points, routeFilter),
+    [points, routeFilter]
+  );
+
+  const unmappedAlerts = React.useMemo(
+    () => getUnmappedAlerts(points, routeFilter),
     [points, routeFilter]
   );
 
@@ -366,6 +383,28 @@ export default function Page() {
     []
   );
 
+  const handleOpenDetailsFromMap = React.useCallback(() => {
+    if (routeFilter === "All") {
+      setViewMode("list");
+      setRouteFilter("All");
+      setSearchQuery("");
+      setCorridorFocus(null);
+      window.setTimeout(() => {
+        document.getElementById("chain-control-table")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 200);
+      return;
+    }
+
+    handleViewDetails(ROUTE_TO_CORRIDOR[routeFilter]);
+  }, [handleViewDetails, routeFilter]);
+
+  const handleViewPointFromPanel = React.useCallback((point: ChainControlPoint) => {
+    setSelectedPoint(point);
+  }, []);
+
   const statusSummary = searchQuery.trim()
     ? `${visiblePoints.length} results on ${routeFilter}`
     : routePoints.length
@@ -459,6 +498,19 @@ export default function Page() {
                 </AlertDescription>
               </Alert>
             ) : null}
+            {stalePointNotice ? (
+              <Alert variant="caution" className="border-amber-200/70 bg-amber-50/80">
+                <AlertTitle className="text-sm text-amber-900">Alert updated</AlertTitle>
+                <AlertDescription className="text-xs text-amber-900">
+                  {stalePointNotice}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <UnmappedAlertsPanel
+              alerts={unmappedAlerts}
+              onViewPoint={handleViewPointFromPanel}
+              onOpenDetails={handleOpenDetailsFromMap}
+            />
             <Card className="relative overflow-hidden border-border/60">
               <CardContent className="p-0">
                 <div className="relative h-[60vh] min-h-[320px] sm:h-[70vh] sm:min-h-[420px]">

@@ -400,6 +400,44 @@ export function filterPointsForRoute(
   return points.filter((point) => point.route === route);
 }
 
+export function hasValidCoords(
+  point: ChainControlPoint
+): point is ChainControlPoint & { latitude: number; longitude: number } {
+  const { latitude, longitude } = point;
+  if (typeof latitude !== "number" || typeof longitude !== "number") {
+    return false;
+  }
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return false;
+  }
+  if (latitude < -90 || latitude > 90) {
+    return false;
+  }
+  if (longitude < -180 || longitude > 180) {
+    return false;
+  }
+  return true;
+}
+
+export function getUnmappedAlerts(
+  points: ChainControlPoint[],
+  routeFilter: RouteFilter
+): ChainControlPoint[] {
+  const filtered = filterPointsForRoute(points, routeFilter);
+
+  return filtered
+    .filter((point) => !hasValidCoords(point) && computePointSeverity(point) !== "GREEN")
+    .sort((a, b) => {
+      const severityDiff =
+        CORRIDOR_SEVERITY_RANK[computePointSeverity(b)] -
+        CORRIDOR_SEVERITY_RANK[computePointSeverity(a)];
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
+      return (getPointUpdatedEpoch(b) ?? 0) - (getPointUpdatedEpoch(a) ?? 0);
+    });
+}
+
 export function sortPoints(points: ChainControlPoint[]): ChainControlPoint[] {
   return [...points].sort((a, b) => {
     const severityDiff =

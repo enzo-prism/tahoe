@@ -26,6 +26,7 @@ The map uses MapLibre via `@vis.gl/react-maplibre` and plots chain control point
   production MapTiler Streets v2 basemap.
 - Without a key, the app falls back to the MapLibre demo style and shows a dev-only notice.
 - Selecting a marker opens a detail sheet with status, updates, and actions to filter the corridor or jump to the table.
+- If Caltrans publishes severe alerts without coordinates, an "Unmapped alerts" panel appears above the map so the corridor stays truthful.
 
 ## Corridor severity + score
 

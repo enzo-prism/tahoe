@@ -12,6 +12,7 @@ import maplibregl from "maplibre-gl";
 import type { ChainControlPoint } from "@/lib/types";
 import {
   computePointSeverity,
+  hasValidCoords,
   formatDirection,
   formatTimestamp
 } from "@/lib/chainControls";
@@ -56,7 +57,7 @@ export function ChainControlMap({
     () =>
       points.filter(
         (point): point is ChainControlPoint & { latitude: number; longitude: number } =>
-          point.latitude !== null && point.longitude !== null
+          hasValidCoords(point)
       ),
     [points]
   );
