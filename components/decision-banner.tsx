@@ -5,12 +5,7 @@ import { formatReasonLine } from "@/lib/chainControls";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const ALERT_VARIANTS: Record<DecisionSummary["severity"], "success" | "caution" | "warning" | "danger"> = {
   GREEN: "success",
@@ -59,21 +54,23 @@ export function DecisionBanner({ summary, directionCallout }: DecisionBannerProp
         <p className="text-sm text-muted-foreground">{directionCallout}</p>
         {topReason ? (
           isPlaceholder ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Top reason:</span>
-                    <span>{reasonText}</span>
-                    <span>- {topReason.updatedAt}</span>
-                    <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-xs">
-                  {topReason.statusDescription}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex flex-wrap items-center gap-2 text-left text-xs text-muted-foreground"
+                  aria-label="Why no active controls"
+                >
+                  <span className="font-medium text-foreground">Top reason:</span>
+                  <span>{reasonText}</span>
+                  <span>- {topReason.updatedAt}</span>
+                  <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="max-w-xs text-xs">
+                {topReason.statusDescription}
+              </PopoverContent>
+            </Popover>
           ) : (
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="font-medium text-foreground">Top reason:</span>

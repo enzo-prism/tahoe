@@ -10,6 +10,7 @@ import {
   computeDecisionSummary,
   filterPointsByQuery,
   filterPointsForRoute,
+  formatDirection,
   formatTimestamp,
   getCorridorKeyForRoute,
   getLatestTimestamp,
@@ -52,11 +53,13 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle
+} from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CorridorSafety } from "@/components/corridor-safety";
 import { DecisionBanner } from "@/components/decision-banner";
 import { ChainControlMap } from "@/components/map/ChainControlMap";
@@ -108,6 +111,7 @@ export default function Page() {
   const [error, setError] = React.useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isMapControlsOpen, setIsMapControlsOpen] = React.useState(false);
   const mapStyle = getMapStyleUrl();
 
   const fetchData = React.useCallback(async () => {
@@ -156,6 +160,24 @@ export default function Page() {
       setSelectedPoint(null);
     }
   }, [viewMode, selectedPoint]);
+
+  React.useEffect(() => {
+    if (viewMode !== "map") {
+      setIsMapControlsOpen(false);
+    }
+  }, [viewMode]);
+
+  React.useEffect(() => {
+    const query = window.matchMedia("(min-width: 640px)");
+    const handleChange = () => {
+      if (query.matches) {
+        setIsMapControlsOpen(false);
+      }
+    };
+    handleChange();
+    query.addEventListener("change", handleChange);
+    return () => query.removeEventListener("change", handleChange);
+  }, []);
 
   const corridorSummaries = React.useMemo(() => {
     const grouped = groupPointsByCorridor(points);
@@ -288,7 +310,10 @@ export default function Page() {
       setCorridorFocus(corridorKey);
       setSelectedPoint(null);
       window.setTimeout(() => {
-        document.getElementById(`row-${point.index}`)?.scrollIntoView({
+        const target =
+          document.getElementById(`row-${point.index}`) ??
+          document.getElementById(`card-${point.index}`);
+        target?.scrollIntoView({
           behavior: "smooth",
           block: "center"
         });
@@ -353,7 +378,7 @@ export default function Page() {
             ) : null}
             <Card className="relative overflow-hidden border-border/60">
               <CardContent className="p-0">
-                <div className="relative h-[70vh] min-h-[420px]">
+                <div className="relative h-[60vh] min-h-[320px] sm:h-[70vh] sm:min-h-[420px]">
                   <ChainControlMap
                     points={routePoints}
                     selectedPoint={selectedPoint}
@@ -362,7 +387,16 @@ export default function Page() {
                     mapStyleUrl={mapStyle.url}
                   />
 
-                  <div className="absolute left-4 top-4 z-10 w-[260px] space-y-3">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsMapControlsOpen(true)}
+                    className="absolute right-4 top-4 z-10 sm:hidden"
+                  >
+                    Controls
+                  </Button>
+
+                  <div className="absolute left-4 top-4 z-10 hidden w-[260px] space-y-3 sm:block">
                     <Card className="bg-white/90 backdrop-blur">
                       <CardContent className="space-y-3 p-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -383,7 +417,7 @@ export default function Page() {
                               />
                               <Label
                                 htmlFor={`map-route-${route}`}
-                                className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-2 py-1 text-[0.65rem] font-semibold text-foreground shadow-sm transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
+                                className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-2 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
                               >
                                 {route}
                               </Label>
@@ -402,11 +436,11 @@ export default function Page() {
                     </Card>
                   </div>
 
-                  <div className="absolute right-4 top-4 z-10 w-[220px]">
+                  <div className="absolute right-4 top-4 z-10 hidden w-[220px] sm:block">
                     <MapLegend />
                   </div>
 
-                  <div className="absolute bottom-4 left-4 z-10 rounded-full bg-white/80 px-3 py-1 text-[0.7rem] text-muted-foreground shadow-sm">
+                  <div className="absolute bottom-4 left-4 z-10 rounded-full bg-white/80 px-3 py-1 text-[0.65rem] text-muted-foreground shadow-sm sm:text-[0.7rem]">
                     {updatedAt
                       ? `Last updated ${formatTimestamp(updatedAt)}`
                       : "Fetching latest data..."}
@@ -427,6 +461,49 @@ export default function Page() {
               onViewCorridor={handleViewCorridorFromMap}
               onJumpToTable={handleJumpToTable}
             />
+
+            <Sheet open={isMapControlsOpen} onOpenChange={setIsMapControlsOpen}>
+              <SheetContent side="bottom" className="space-y-4 sm:hidden">
+                <SheetHeader>
+                  <SheetTitle>Map controls</SheetTitle>
+                  <SheetDescription>Filter corridors and refresh live data.</SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Corridor filter
+                  </p>
+                  <RadioGroup
+                    value={routeFilter}
+                    onValueChange={(value) => handleRouteChange(value as RouteFilter)}
+                    aria-label="Map corridor filter"
+                    className="grid grid-cols-2 gap-2"
+                  >
+                    {ROUTE_FILTERS.map((route) => (
+                      <div key={`map-sheet-${route}`} className="flex items-center">
+                        <RadioGroupItem
+                          value={route}
+                          id={`map-sheet-route-${route}`}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={`map-sheet-route-${route}`}
+                          className="flex w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-2 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
+                        >
+                          {route}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                  <Button variant="secondary" size="sm" onClick={fetchData} disabled={isRefreshing}>
+                    {isRefreshing ? "Refreshing..." : "Refresh now"}
+                  </Button>
+                </div>
+
+                <Separator />
+                <MapLegend />
+              </SheetContent>
+            </Sheet>
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
@@ -544,7 +621,7 @@ function DirectionPanel({
               <p className="text-sm font-medium text-foreground">Choose a route</p>
               <RouteSelector value={routeFilter} onChange={onRouteChange} />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 sm:flex">
               <Button variant="secondary" onClick={onRefresh} disabled={isRefreshing}>
                 {isRefreshing ? "Refreshing..." : "Refresh now"}
               </Button>
@@ -615,98 +692,106 @@ function DirectionPanel({
                 : "No active controls found for this route right now."}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <div className="flex items-center gap-2">
-                      <span>Status</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:underline"
-                            >
-                              <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                              Why this matters
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs text-xs">
-                            <div className="space-y-1">
-                              <p>
-                                <span className="font-semibold">R-1:</span> Chains required except
-                                4WD/AWD with snow tires (must carry).
-                              </p>
-                              <p>
-                                <span className="font-semibold">R-2:</span> Chains required on all
-                                vehicles except 4WD/AWD with snow tires (must carry).
-                              </p>
-                              <p>
-                                <span className="font-semibold">R-3:</span> Chains required on all
-                                vehicles, no exceptions.
-                              </p>
-                              <p>
-                                <span className="font-semibold">RC:</span> Road closed.
-                              </p>
-                              <p>
-                                <span className="font-semibold">HT:</span> All traffic held at
-                                checkpoint.
-                              </p>
-                              <p>
-                                <span className="font-semibold">ESC:</span> CHP escorting traffic.
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Nearby</TableHead>
-                  <TableHead>Direction</TableHead>
-                  <TableHead>Elevation</TableHead>
-                  <TableHead>County</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {points.map((point) => {
-                  const severity = getSeverityForStatus(point.status);
-                  const updated = point.statusTimestamp ?? point.recordTimestamp;
-                  return (
-                    <TableRow key={point.index} id={`row-${point.index}`}>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn("text-xs", STATUS_BADGE_CLASSES[severity])}
-                        >
-                          {point.status || "Unknown"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{point.route}</TableCell>
-                      <TableCell>{point.locationName}</TableCell>
-                      <TableCell>{point.nearbyPlace}</TableCell>
-                      <TableCell>{point.direction}</TableCell>
-                      <TableCell>
-                        {point.elevation !== null
-                          ? `${point.elevation.toLocaleString()} ft`
-                          : "-"}
-                      </TableCell>
-                      <TableCell>{point.county}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatTimestamp(updated)}
-                      </TableCell>
-                      <TableCell className="max-w-sm text-xs text-muted-foreground">
-                        {point.statusDescription || "No additional notes."}
-                      </TableCell>
+            <>
+              <div className="space-y-3 sm:hidden">
+                {points.map((point) => (
+                  <MobilePointCard key={`card-${point.index}`} point={point} />
+                ))}
+              </div>
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <div className="flex items-center gap-2">
+                          <span>Status</span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:underline"
+                                aria-label="Why chain control status matters"
+                              >
+                                <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                                Why this matters
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="max-w-xs text-xs">
+                              <div className="space-y-1">
+                                <p>
+                                  <span className="font-semibold">R-1:</span> Chains required
+                                  except 4WD/AWD with snow tires (must carry).
+                                </p>
+                                <p>
+                                  <span className="font-semibold">R-2:</span> Chains required on
+                                  all vehicles except 4WD/AWD with snow tires (must carry).
+                                </p>
+                                <p>
+                                  <span className="font-semibold">R-3:</span> Chains required on
+                                  all vehicles, no exceptions.
+                                </p>
+                                <p>
+                                  <span className="font-semibold">RC:</span> Road closed.
+                                </p>
+                                <p>
+                                  <span className="font-semibold">HT:</span> All traffic held at
+                                  checkpoint.
+                                </p>
+                                <p>
+                                  <span className="font-semibold">ESC:</span> CHP escorting traffic.
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </TableHead>
+                      <TableHead>Route</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Nearby</TableHead>
+                      <TableHead>Direction</TableHead>
+                      <TableHead>Elevation</TableHead>
+                      <TableHead>County</TableHead>
+                      <TableHead>Updated</TableHead>
+                      <TableHead>Notes</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {points.map((point) => {
+                      const severity = getSeverityForStatus(point.status);
+                      const updated = point.statusTimestamp ?? point.recordTimestamp;
+                      return (
+                        <TableRow key={point.index} id={`row-${point.index}`}>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={cn("text-xs", STATUS_BADGE_CLASSES[severity])}
+                            >
+                              {point.status || "Unknown"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{point.route}</TableCell>
+                          <TableCell>{point.locationName}</TableCell>
+                          <TableCell>{point.nearbyPlace}</TableCell>
+                          <TableCell>{point.direction}</TableCell>
+                          <TableCell>
+                            {point.elevation !== null
+                              ? `${point.elevation.toLocaleString()} ft`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{point.county}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatTimestamp(updated)}
+                          </TableCell>
+                          <TableCell className="max-w-sm text-xs text-muted-foreground">
+                            {point.statusDescription || "No additional notes."}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -754,7 +839,7 @@ function RouteSelector({ value, onChange }: RouteSelectorProps) {
     <RadioGroup
       value={value}
       onValueChange={(nextValue) => onChange(nextValue as RouteFilter)}
-      className="grid gap-2 md:grid-cols-4"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-4"
     >
       {ROUTE_FILTERS.map((route) => (
         <div key={route} className="flex items-center">
@@ -775,5 +860,48 @@ function RouteSelector({ value, onChange }: RouteSelectorProps) {
         </div>
       ))}
     </RadioGroup>
+  );
+}
+
+function MobilePointCard({ point }: { point: ChainControlPoint }) {
+  const severity = getSeverityForStatus(point.status);
+  const updated = point.statusTimestamp ?? point.recordTimestamp;
+  const directionLabel = formatDirection(point.direction);
+  const routeLabel = directionLabel ? `${point.route} ${directionLabel}` : point.route;
+
+  return (
+    <Card id={`card-${point.index}`}>
+      <CardContent className="space-y-3 pt-4">
+        <div className="flex items-center justify-between gap-2">
+          <Badge
+            variant="outline"
+            className={cn("text-xs", STATUS_BADGE_CLASSES[severity])}
+          >
+            {point.status || "Unknown"}
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            {formatTimestamp(updated)}
+          </span>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">{routeLabel}</p>
+          <p className="text-sm text-foreground">{point.locationName}</p>
+          {point.nearbyPlace ? (
+            <p className="text-xs text-muted-foreground">{point.nearbyPlace}</p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>County: {point.county || "-"}</span>
+          <span>
+            Elevation:{" "}
+            {point.elevation !== null ? `${point.elevation.toLocaleString()} ft` : "-"}
+          </span>
+        </div>
+        <Separator />
+        <p className="text-xs text-muted-foreground">
+          {point.statusDescription || "No additional notes."}
+        </p>
+      </CardContent>
+    </Card>
   );
 }

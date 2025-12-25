@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import type { CorridorKey, CorridorLabel, ChainControlPoint } from "@/lib/types";
 import {
   computePointSeverity,
@@ -49,10 +51,25 @@ export function PointDetailsSheet({
   onViewCorridor,
   onJumpToTable
 }: PointDetailsSheetProps) {
+  const [isDesktop, setIsDesktop] = React.useState(false);
+
+  React.useEffect(() => {
+    const query = window.matchMedia("(min-width: 640px)");
+    const update = () => setIsDesktop(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  const side = isDesktop ? "right" : "bottom";
+  const sheetClass = isDesktop
+    ? "flex h-full flex-col overflow-y-auto"
+    : "flex max-h-[85vh] flex-col overflow-y-auto";
+
   if (!point) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" />
+        <SheetContent side={side} className={sheetClass} />
       </Sheet>
     );
   }
@@ -66,7 +83,7 @@ export function PointDetailsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex h-full flex-col">
+      <SheetContent side={side} className={sheetClass}>
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Badge
