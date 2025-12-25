@@ -544,15 +544,25 @@ const computeSummary = (points: ChainControlPoint[]) => {
   }
 
   const thresholdRank = CORRIDOR_SEVERITY_RANK[severity];
-  const reasonCandidates = activePoints
+  type ReasonCandidate = CorridorReason & { updatedEpoch: number };
+  const toReasonSeverity = (severity: CorridorSeverity): CorridorReason["severity"] => {
+    if (severity === "RED") {
+      return "RED";
+    }
+    if (severity === "ORANGE") {
+      return "ORANGE";
+    }
+    return "YELLOW";
+  };
+
+  const reasonCandidates: ReasonCandidate[] = activePoints
     .filter((point) => {
       return CORRIDOR_SEVERITY_RANK[computePointSeverity(point)] >= thresholdRank;
     })
     .map((point) => {
       const severityLevel = computePointSeverity(point);
       return {
-        severity:
-          severityLevel === "RED" ? "RED" : severityLevel === "ORANGE" ? "ORANGE" : "YELLOW",
+        severity: toReasonSeverity(severityLevel),
         status: point.status || "Unknown",
         route: point.route,
         locationName: point.locationName,
