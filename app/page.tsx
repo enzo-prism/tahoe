@@ -306,17 +306,28 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50">
       <div className="container space-y-6 py-10">
-        <header className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Tahoe Chain Control
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-            Bay Area ↔ Lake Tahoe Road Safety
-          </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Live Caltrans chain control updates for I-80, US-50, and key Tahoe routes. Refreshes
-            every 60 seconds.
-          </p>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Tahoe Chain Control
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+              Bay Area ↔ Lake Tahoe Road Safety
+            </h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Live Caltrans chain control updates for I-80, US-50, and key Tahoe routes. Refreshes
+              every 60 seconds.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={fetchData}
+            disabled={isRefreshing}
+            className="self-start"
+          >
+            {isRefreshing ? "Refreshing..." : "Refresh now"}
+          </Button>
         </header>
 
         {error && (
