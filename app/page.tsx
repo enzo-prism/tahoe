@@ -57,6 +57,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
+  SheetTrigger,
   SheetTitle
 } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -98,6 +99,49 @@ const STATUS_BADGE_CLASSES: Record<SeverityLevel, string> = {
   chains: "border-orange-200 bg-orange-100 text-orange-900",
   avoid: "border-red-200 bg-red-100 text-red-900"
 };
+
+function AboutDataDetails({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "space-y-3 text-xs leading-relaxed text-muted-foreground",
+        className
+      )}
+    >
+      <div className="space-y-2">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+          Source feeds
+        </p>
+        <p>
+          We pull chain-control status directly from the official Caltrans public JSON feeds for
+          District 3 (Sacramento) and District 10 (Stockton).
+        </p>
+        <div className="space-y-1 font-mono text-[0.65rem] text-muted-foreground/90">
+          <p className="break-all">https://cwwp2.dot.ca.gov/data/d3/cc/ccStatusD03.json</p>
+          <p className="break-all">https://cwwp2.dot.ca.gov/data/d10/cc/ccStatusD10.json</p>
+        </div>
+      </div>
+      <Separator className="bg-border/60" />
+      <div className="space-y-2">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+          How we use it
+        </p>
+        <p>
+          Our API endpoint{" "}
+          <code className="rounded bg-muted px-1 py-0.5 text-[0.65rem] text-foreground">
+            /api/chain-controls
+          </code>{" "}
+          fetches both feeds, normalizes them into a single list, and caches results for about 60
+          seconds.
+        </p>
+        <p>
+          You can always see the last successful refresh time. If the feeds are unreachable, the
+          app keeps the most recent data and shows a warning.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function Page() {
   const [direction, setDirection] = React.useState<Direction>("bay-to-tahoe");
@@ -345,6 +389,45 @@ export default function Page() {
             </p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden h-7 px-2 text-xs text-muted-foreground hover:text-foreground sm:inline-flex"
+                >
+                  <Info className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                  About this data
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-[min(92vw,380px)] max-h-[70vh] overflow-auto"
+              >
+                <AboutDataDetails />
+              </PopoverContent>
+            </Popover>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground sm:hidden"
+                >
+                  <Info className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                  About this data
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[80vh] space-y-4 overflow-auto">
+                <SheetHeader>
+                  <SheetTitle>About this data</SheetTitle>
+                  <SheetDescription>
+                    Where the chain-control updates come from and how they are processed.
+                  </SheetDescription>
+                </SheetHeader>
+                <AboutDataDetails className="text-sm" />
+              </SheetContent>
+            </Sheet>
             <Button variant="secondary" size="sm" onClick={fetchData} disabled={isRefreshing}>
               {isRefreshing ? "Refreshing..." : "Refresh now"}
             </Button>
