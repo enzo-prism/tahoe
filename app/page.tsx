@@ -344,15 +344,16 @@ export default function Page() {
               every 60 seconds.
             </p>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={fetchData}
-            disabled={isRefreshing}
-            className="self-start"
-          >
-            {isRefreshing ? "Refreshing..." : "Refresh now"}
-          </Button>
+          <div className="flex flex-col items-start gap-1 sm:items-end">
+            <Button variant="secondary" size="sm" onClick={fetchData} disabled={isRefreshing}>
+              {isRefreshing ? "Refreshing..." : "Refresh now"}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {updatedAt
+                ? `Last refreshed ${formatTimestamp(updatedAt)}`
+                : "Waiting for first refresh..."}
+            </span>
+          </div>
         </header>
 
         {error && (
@@ -365,7 +366,7 @@ export default function Page() {
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
           <TabsList className="w-full justify-start">
             <TabsTrigger value="map">Map</TabsTrigger>
-            <TabsTrigger value="list">List</TabsTrigger>
+            <TabsTrigger value="list">Details</TabsTrigger>
           </TabsList>
 
           <TabsContent value="map" className="space-y-6">
