@@ -26,7 +26,7 @@ import {
 import { DEFAULT_BOUNDS, getBoundsFromPoints } from "@/lib/mapUtils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import corridorGeoJson from "@/data/corridors.geojson";
+import corridorGeoJson from "@/data/corridors.json";
 
 const MARKER_CLASSES = {
   GREEN: "bg-emerald-500 border-emerald-700",
