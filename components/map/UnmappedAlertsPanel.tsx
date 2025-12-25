@@ -2,15 +2,24 @@
 
 import * as React from "react";
 
-import type { ChainControlPoint, CorridorSeverity } from "@/lib/types";
-import { computePointSeverity, formatDirection } from "@/lib/chainControls";
+import type { ChainControlPoint } from "@/lib/types";
+import { formatDirection } from "@/lib/chainControls";
+import {
+  type Severity,
+  type VehicleMode,
+  getPointCode,
+  getPointSeverity,
+  getPointStatusLabel,
+  getSeverityLabel
+} from "@/lib/effectiveStatus";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const SEVERITY_BADGE_CLASSES: Record<CorridorSeverity, string> = {
+const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
   GREEN: "border-emerald-200 bg-emerald-100 text-emerald-900",
   YELLOW: "border-yellow-200 bg-yellow-100 text-yellow-900",
   ORANGE: "border-orange-200 bg-orange-100 text-orange-900",
@@ -21,7 +30,7 @@ interface UnmappedAlertsPanelProps {
   alerts: ChainControlPoint[];
   onViewPoint: (point: ChainControlPoint) => void;
   onOpenDetails: () => void;
-  severityForPoint?: (point: ChainControlPoint) => CorridorSeverity;
+  vehicleMode: VehicleMode;
 }
 
 const getLocationLabel = (point: ChainControlPoint) => {
@@ -39,14 +48,13 @@ export function UnmappedAlertsPanel({
   alerts,
   onViewPoint,
   onOpenDetails,
-  severityForPoint
+  vehicleMode
 }: UnmappedAlertsPanelProps) {
   if (alerts.length === 0) {
     return null;
   }
 
-  const computeSeverity = severityForPoint ?? computePointSeverity;
-  const hasRed = alerts.some((alert) => computeSeverity(alert) === "RED");
+  const hasRed = alerts.some((alert) => getPointSeverity(alert, vehicleMode) === "RED");
   const previewAlerts = alerts.slice(0, 3);
   const remaining = alerts.length - previewAlerts.length;
 
@@ -55,21 +63,20 @@ export function UnmappedAlertsPanel({
       variant={hasRed ? "destructive" : "warning"}
       className="border-border/60 bg-white/80 backdrop-blur"
     >
-      <AlertTitle className="text-sm">
-        ⚠️ {alerts.length} alert{alerts.length === 1 ? "" : "s"} not shown on map
-      </AlertTitle>
+      <AlertTitle className="text-sm">⚠️ Alerts not shown on map</AlertTitle>
       <AlertDescription className="space-y-3 text-xs text-muted-foreground">
         <p>These corridor alerts don't include coordinates, so they can't be placed on the map.</p>
         <Separator className="bg-border/60" />
         <div className="space-y-2">
           {previewAlerts.map((alert) => {
-            const severity = computeSeverity(alert);
-            const statusLabel = alert.status?.trim() || "Unknown";
+            const severity = getPointSeverity(alert, vehicleMode);
+            const statusLabel = getPointStatusLabel(alert);
             const locationLabel = getLocationLabel(alert);
             const nearbyLabel = alert.nearbyPlace?.trim()
               ? ` near ${alert.nearbyPlace.trim()}`
               : "";
             const detailText = `${statusLabel} at ${locationLabel}${nearbyLabel}`;
+            const code = getPointCode(alert);
 
             return (
               <div
@@ -84,15 +91,23 @@ export function UnmappedAlertsPanel({
                       SEVERITY_BADGE_CLASSES[severity]
                     )}
                   >
-                    {severity}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="text-[0.6rem] font-semibold text-foreground"
-                  >
-                    {statusLabel}
+                    {getSeverityLabel(severity)}
                   </Badge>
                   <span className="text-foreground">{detailText}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-[0.65rem] text-muted-foreground underline-offset-4 hover:underline"
+                          aria-label="Show status code"
+                        >
+                          Code
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Code: {code}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <Button
                   variant="secondary"
@@ -108,7 +123,7 @@ export function UnmappedAlertsPanel({
         </div>
         {remaining > 0 ? (
           <p className="text-[0.7rem] text-muted-foreground">
-            + {remaining} more (see Details tab)
+            + {remaining} more (see Summary tab)
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +133,7 @@ export function UnmappedAlertsPanel({
             onClick={onOpenDetails}
             className="h-7 px-3 text-xs"
           >
-            Open Details
+            Open Summary
           </Button>
         </div>
       </AlertDescription>

@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "key": "I80",
+        "name": "I-80"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-122.2711, 37.8044],
+          [-121.4944, 38.5816],
+          [-121.0769, 38.8966],
+          [-120.1833, 39.3274],
+          [-119.939, 39.2527]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "key": "US50",
+        "name": "US-50"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.4944, 38.5816],
+          [-120.7983, 38.7296],
+          [-120.296, 38.7774],
+          [-119.99, 38.9333]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "key": "SR88",
+        "name": "SR-88"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.267, 38.348],
+          [-120.8594, 38.4129],
+          [-120.129, 38.6848],
+          [-119.96, 38.707]
+        ]
+      }
+    }
+  ]
+}

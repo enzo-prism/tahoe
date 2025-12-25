@@ -109,7 +109,7 @@ const combineDateTime = (date?: string, time?: string) => {
   return `${date} ${time}`;
 };
 
-const normalizeStatus = (status?: string | null) => {
+export const normalizeStatus = (status?: string | null) => {
   if (!status) {
     return "";
   }
@@ -143,7 +143,7 @@ const getTimeZoneOffset = (date: Date) => {
   return asUtc - date.getTime();
 };
 
-const parseTimestamp = (timestamp?: string | null) => {
+export const parseTimestamp = (timestamp?: string | null) => {
   if (!timestamp) {
     return null;
   }
@@ -173,11 +173,11 @@ const parseTimestamp = (timestamp?: string | null) => {
   return utcDate.getTime() - offset;
 };
 
-const getPointUpdatedAt = (point: ChainControlPoint) => {
+export const getPointUpdatedAt = (point: ChainControlPoint) => {
   return point.statusTimestamp ?? point.recordTimestamp;
 };
 
-const getPointUpdatedEpoch = (point: ChainControlPoint) => {
+export const getPointUpdatedEpoch = (point: ChainControlPoint) => {
   return parseTimestamp(getPointUpdatedAt(point));
 };
 

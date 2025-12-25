@@ -12,32 +12,35 @@ const SEVERITY_BADGE_CLASSES = {
 
 type BadgeTone = keyof typeof SEVERITY_BADGE_CLASSES;
 
-const SUMMARY_ITEMS: Array<{ code: string; label: string; tone: BadgeTone }> = [
-  { code: "R-0", label: "Good to go", tone: "GREEN" },
-  { code: "R-1", label: "Use caution", tone: "YELLOW" },
-  { code: "R-2", label: "Chains likely needed", tone: "ORANGE" },
-  { code: "R-3 / RC / HT / ESC", label: "Avoid / Delay", tone: "RED" }
+const SUMMARY_ITEMS: Array<{ label: string; description: string; tone: BadgeTone }> = [
+  { label: "Good to go", description: "Drive normally.", tone: "GREEN" },
+  { label: "Use caution", description: "Bring chains and slow down.", tone: "YELLOW" },
+  { label: "Chains required", description: "Most cars need chains.", tone: "ORANGE" },
+  { label: "Do not go", description: "Road closed or held.", tone: "RED" }
 ];
 
 const CODE_DEFINITIONS: Array<{ code: string; description: string; tone: BadgeTone }> = [
   {
     code: "R-1",
-    description: "Chains required except 4WD/AWD with snow tires (must carry).",
+    description: "Chains required; 4WD/AWD with snow tires are OK (must carry).",
     tone: "YELLOW"
   },
   {
     code: "R-2",
-    description: "Chains required on all vehicles except 4WD/AWD with snow tires (must carry).",
+    description: "Chains required on most cars (4WD/AWD with snow tires OK, must carry).",
     tone: "ORANGE"
   },
   {
     code: "R-3",
-    description: "Chains required on all vehicles, no exceptions.",
+    description: "Chains required on all vehicles.",
     tone: "RED"
   },
   { code: "RC", description: "Road closed.", tone: "RED" },
   { code: "HT", description: "All traffic held at checkpoint.", tone: "RED" },
-  { code: "ESC", description: "CHP escorting traffic.", tone: "RED" }
+  { code: "ESC", description: "CHP escorting traffic.", tone: "RED" },
+  { code: "TS", description: "Truck checkpoint (may slow traffic).", tone: "ORANGE" },
+  { code: "MAX", description: "Truck chains: maximum required.", tone: "ORANGE" },
+  { code: "MIN", description: "Truck chains: minimum required.", tone: "YELLOW" }
 ];
 
 export function MapLegend() {
@@ -55,14 +58,14 @@ export function MapLegend() {
             Status colors
           </p>
           {SUMMARY_ITEMS.map((item) => (
-            <div key={item.code} className="flex items-center gap-2">
+            <div key={item.label} className="flex items-center gap-2">
               <Badge
                 variant="outline"
                 className={cn("text-[0.65rem]", SEVERITY_BADGE_CLASSES[item.tone])}
               >
-                {item.code}
+                {item.label}
               </Badge>
-              <span>{item.label}</span>
+              <span>{item.description}</span>
             </div>
           ))}
         </div>

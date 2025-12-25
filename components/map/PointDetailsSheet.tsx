@@ -2,12 +2,16 @@
 
 import * as React from "react";
 
-import type { CorridorKey, CorridorLabel, ChainControlPoint } from "@/lib/types";
+import type { CorridorKey, ChainControlPoint } from "@/lib/types";
+import { formatDirection, formatTimestamp } from "@/lib/chainControls";
 import {
-  computePointSeverity,
-  formatDirection,
-  formatTimestamp
-} from "@/lib/chainControls";
+  type Severity,
+  type VehicleMode,
+  getPointCode,
+  getPointSeverity,
+  getPointStatusLabel,
+  getSeverityLabel
+} from "@/lib/effectiveStatus";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,18 +24,11 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 
-const SEVERITY_BADGE_CLASSES = {
+const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
   GREEN: "border-emerald-200 bg-emerald-100 text-emerald-900",
   YELLOW: "border-yellow-200 bg-yellow-100 text-yellow-900",
   ORANGE: "border-orange-200 bg-orange-100 text-orange-900",
   RED: "border-red-200 bg-red-100 text-red-900"
-};
-
-const SEVERITY_LABELS: Record<"GREEN" | "YELLOW" | "ORANGE" | "RED", CorridorLabel> = {
-  GREEN: "Good to go",
-  YELLOW: "Use caution",
-  ORANGE: "Chains likely needed",
-  RED: "Avoid / Delay"
 };
 
 interface PointDetailsSheetProps {
@@ -41,6 +38,7 @@ interface PointDetailsSheetProps {
   onOpenChange: (open: boolean) => void;
   onViewCorridor: (key: CorridorKey) => void;
   onJumpToTable: (point: ChainControlPoint) => void;
+  vehicleMode: VehicleMode;
 }
 
 export function PointDetailsSheet({
@@ -49,7 +47,8 @@ export function PointDetailsSheet({
   open,
   onOpenChange,
   onViewCorridor,
-  onJumpToTable
+  onJumpToTable,
+  vehicleMode
 }: PointDetailsSheetProps) {
   const [isDesktop, setIsDesktop] = React.useState(false);
 
@@ -74,12 +73,13 @@ export function PointDetailsSheet({
     );
   }
 
-  const severity = computePointSeverity(point);
-  const label = SEVERITY_LABELS[severity];
+  const severity = getPointSeverity(point, vehicleMode);
+  const label = getSeverityLabel(severity);
   const directionLabel = formatDirection(point.direction);
   const routeLabel = directionLabel ? `${point.route} ${directionLabel}` : point.route;
   const updatedStatus = formatTimestamp(point.statusTimestamp);
   const updatedRecord = formatTimestamp(point.recordTimestamp);
+  const statusCode = getPointCode(point);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -121,12 +121,16 @@ export function PointDetailsSheet({
 
           <div>
             <p className="text-xs font-semibold uppercase text-muted-foreground">Status notes</p>
-            <p className="text-sm text-foreground">
+            <p className="text-sm text-foreground">{getPointStatusLabel(point)}</p>
+            <p className="text-xs text-muted-foreground">
               {point.statusDescription || "No additional notes."}
             </p>
           </div>
 
           <div className="space-y-1 text-xs text-muted-foreground">
+            <p>
+              <span className="font-semibold text-foreground">Code:</span> {statusCode}
+            </p>
             <p>
               <span className="font-semibold text-foreground">Status updated:</span> {updatedStatus}
             </p>

@@ -1,8 +1,15 @@
 # Tahoe Chain Control
 
-Tahoe Chain Control is a live safety dashboard for travelers moving between the Bay Area and Lake Tahoe. It aggregates Caltrans chain control updates from District 3 and District 10 and highlights whether conditions are good, cautionary, or unsafe.
+Tahoe Chain Control is a live travel dashboard for the Bay Area ↔ Lake Tahoe corridors. It aggregates Caltrans chain control updates and answers the core question: "Can we go now?" for cars and trucks.
 
 ## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+Or with pnpm:
 
 ```bash
 pnpm install
@@ -16,7 +23,19 @@ Then open `http://localhost:3000`.
 - District 3: `https://cwwp2.dot.ca.gov/data/d3/cc/ccStatusD03.json`
 - District 10: `https://cwwp2.dot.ca.gov/data/d10/cc/ccStatusD10.json`
 
-The API route `/api/chain-controls` merges both feeds and refreshes every 60 seconds.
+The API route `/api/chain-controls` merges both feeds and refreshes about once a minute.
+
+## Vehicle modes
+
+- **Car/SUV (default):** corridor verdicts only consider passenger-impacting statuses such as `R-1`, `R-2`, `R-3`, `RC`, `HT`, `ESC`, and `TTA`.
+- **Truck/Commercial:** corridor verdicts consider passenger-impacting statuses plus truck-only operational statuses like `TS`, `MAX`, and `MIN`.
+- Truck-only statuses appear as a separate advisory in Car mode so the summary and map stay consistent.
+
+## Summary view
+
+- A hero card answers "Can we go now?" for the selected corridor.
+- Corridor cards show the verdict, a one-sentence meaning, and the top reasons relevant to the selected vehicle mode.
+- Truck advisories are tucked into a collapsed section in Car mode.
 
 ## Map view
 
@@ -25,21 +44,17 @@ The map uses MapLibre via `@vis.gl/react-maplibre` and plots chain control point
 - Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_MAPTILER_KEY` to enable the
   production MapTiler Streets v2 basemap.
 - Without a key, the app falls back to the MapLibre demo style and shows a dev-only notice.
-- Selecting a marker opens a detail sheet with status, updates, and actions to filter the corridor or jump to the table.
-- If Caltrans publishes severe alerts without coordinates, an "Unmapped alerts" panel appears above the map so the corridor stays truthful.
+- A top banner shows the same corridor verdict as the Summary.
+- Corridor polylines are colored by severity so the road itself reflects the verdict.
+- Markers follow the same vehicle-mode rules as the Summary.
+- Selecting a marker opens a detail sheet with status, updates, and actions to filter the corridor or jump to the Summary.
+- If Caltrans publishes severe alerts without coordinates, an "Unmapped alerts" panel appears above the map.
 
-## Corridor severity + score
+## Severity language
 
-Corridor cards and decision banners use safety-first Caltrans status rules:
+- **Green:** You can drive normally.
+- **Yellow:** Be careful. Bring chains.
+- **Orange:** Chains required on many cars.
+- **Red:** Do not go. Road closed or held.
 
-- **Green / Good to go:** all points are `R-0` or no active controls found.
-- **Yellow / Use caution:** any point is `R-1` or `R-1M`.
-- **Orange / Chains likely needed:** any point is `R-2`.
-- **Red / Avoid / Delay:** any point is `R-3`, `RC`, `ESC`, `HT`, `TS`, `TTA`, or other hold/closure codes.
-- **MIN/MAX:** informational only, does not elevate severity on its own.
-- Unknown non `R-0`/`R-1`/`R-2` statuses are treated as **Red** for safety.
-
-Scores start at 100, are capped by severity (Yellow 70, Orange 40, Red 10), then reduced by:
-
-- `-5` per additional affected point (up to `-20`).
-- `-5` if the latest update is older than 5 minutes.
+Status codes are still available in tooltips and detail panels for advanced users.
