@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   type RouteFilter,
@@ -13,6 +13,7 @@ import {
   getLatestTimestamp
 } from "@/lib/chainControls";
 import { getMapStyleUrl } from "@/lib/mapStyle";
+import { getPathForState } from "@/lib/routePaths";
 import type {
   ChainControlPoint,
   ChainControlResponse,
@@ -76,6 +77,11 @@ import { PointDetailsSheet } from "@/components/map/PointDetailsSheet";
 import { Info } from "lucide-react";
 
 const REFRESH_INTERVAL_MS = 60_000;
+
+interface ChainControlPageProps {
+  initialRouteFilter?: RouteFilter;
+  initialVehicleMode?: VehicleMode;
+}
 
 type ViewMode = "summary" | "map";
 
@@ -171,13 +177,16 @@ function AboutDataDetails({ className }: { className?: string }) {
   );
 }
 
-export default function ChainControlPage() {
+export default function ChainControlPage({
+  initialRouteFilter = "All",
+  initialVehicleMode = "car"
+}: ChainControlPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [viewMode, setViewMode] = React.useState<ViewMode>("map");
-  const [vehicleMode, setVehicleMode] = React.useState<VehicleMode>("car");
+  const [vehicleMode, setVehicleMode] = React.useState<VehicleMode>(initialVehicleMode);
   const [showTruckAdvisories, setShowTruckAdvisories] = React.useState(false);
-  const [routeFilter, setRouteFilter] = React.useState<RouteFilter>("All");
+  const [routeFilter, setRouteFilter] = React.useState<RouteFilter>(initialRouteFilter);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [points, setPoints] = React.useState<ChainControlPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = React.useState<ChainControlPoint | null>(null);
@@ -190,18 +199,15 @@ export default function ChainControlPage() {
   const hasForcedRefresh = React.useRef(false);
   const mapStyle = getMapStyleUrl();
 
-  React.useEffect(() => {
-    const modeParam = searchParams.get("mode");
-    if (modeParam === "car" || modeParam === "truck") {
-      if (modeParam !== vehicleMode) {
-        setVehicleMode(modeParam);
+  const navigateForState = React.useCallback(
+    (nextMode: VehicleMode, nextRoute: RouteFilter) => {
+      const nextPath = getPathForState(nextRoute, nextMode);
+      if (nextPath !== pathname) {
+        router.replace(nextPath, { scroll: false });
       }
-      return;
-    }
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("mode", vehicleMode);
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams, vehicleMode]);
+    },
+    [pathname, router]
+  );
 
   const fetchData = React.useCallback(async (options: { forceFresh?: boolean } = {}) => {
     const shouldForceFresh = options.forceFresh ?? !hasForcedRefresh.current;
@@ -370,8 +376,9 @@ export default function ChainControlPage() {
     (nextRoute: RouteFilter) => {
       setRouteFilter(nextRoute);
       setSearchQuery("");
+      navigateForState(vehicleMode, nextRoute);
     },
-    []
+    [navigateForState, vehicleMode]
   );
 
   const handleSearchChange = React.useCallback((value: string) => {
@@ -381,20 +388,20 @@ export default function ChainControlPage() {
   const handleVehicleModeChange = React.useCallback(
     (mode: VehicleMode) => {
       setVehicleMode(mode);
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("mode", mode);
-      router.replace(`?${params.toString()}`, { scroll: false });
+      navigateForState(mode, routeFilter);
     },
-    [router, searchParams]
+    [navigateForState, routeFilter]
   );
 
   const handleViewCorridorFromMap = React.useCallback(
     (key: CorridorKey) => {
-      setRouteFilter(CORRIDOR_ROUTE_FILTER[key]);
+      const nextRoute = CORRIDOR_ROUTE_FILTER[key];
+      setRouteFilter(nextRoute);
       setSearchQuery("");
       setViewMode("summary");
+      navigateForState(vehicleMode, nextRoute);
     },
-    []
+    [navigateForState, vehicleMode]
   );
 
   const handleJumpToTable = React.useCallback(
@@ -408,6 +415,7 @@ export default function ChainControlPage() {
       setRouteFilter(nextRoute);
       setSearchQuery("");
       setSelectedPoint(null);
+      navigateForState(vehicleMode, nextRoute);
       window.setTimeout(() => {
         const target =
           document.getElementById(`row-${point.index}`) ??
@@ -418,7 +426,7 @@ export default function ChainControlPage() {
         });
       }, 250);
     },
-    []
+    [navigateForState, vehicleMode]
   );
 
   const handleOpenSummaryFromMap = React.useCallback(() => {
@@ -443,6 +451,9 @@ export default function ChainControlPage() {
           <div className="space-y-2">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Chain Control Report
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Tahoe Chain Control Map (I-80, US-50, SR-88)
             </p>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
               Bay Area ↔ Lake Tahoe

@@ -13,6 +13,16 @@ ${siteUrl}/
 ## Description
 This site provides live chain control status, corridor summaries, and map visualizations.
 
+## Key URLs
+- ${siteUrl}/
+- ${siteUrl}/i-80
+- ${siteUrl}/us-50
+- ${siteUrl}/sr-88
+- ${siteUrl}/truck
+- ${siteUrl}/truck/i-80
+- ${siteUrl}/truck/us-50
+- ${siteUrl}/truck/sr-88
+
 ## Allowed
 /
 

@@ -1,3 +1,5 @@
+const DEFAULT_PRODUCTION_URL = "https://chain-map.live";
+
 function normalizeUrl(rawUrl: string): string {
   const trimmed = rawUrl.trim();
   if (!trimmed) {
@@ -13,6 +15,10 @@ export function getSiteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
   if (explicit && explicit.trim().length > 0) {
     return normalizeUrl(explicit);
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    return DEFAULT_PRODUCTION_URL;
   }
 
   const vercelUrl = process.env.VERCEL_URL;

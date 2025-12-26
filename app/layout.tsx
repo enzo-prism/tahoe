@@ -14,18 +14,8 @@ const plexSans = IBM_Plex_Sans({
   weight: ["400", "500", "600", "700"]
 });
 
-const siteUrl = getSiteUrl();
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Tahoe Chain Control",
-    template: "%s | Tahoe Chain Control"
-  },
-  description: "Live chain control updates for Bay Area and Lake Tahoe travel.",
-  alternates: {
-    canonical: "/"
-  },
+  metadataBase: new URL(getSiteUrl()),
   robots: {
     index: true,
     follow: true,
@@ -36,19 +26,6 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-video-preview": -1
     }
-  },
-  openGraph: {
-    type: "website",
-    url: siteUrl,
-    title: "Tahoe Chain Control",
-    description: "Live chain control updates for Bay Area and Lake Tahoe travel.",
-    siteName: "Tahoe Chain Control",
-    locale: "en_US"
-  },
-  twitter: {
-    card: "summary",
-    title: "Tahoe Chain Control",
-    description: "Live chain control updates for Bay Area and Lake Tahoe travel."
   }
 };
 
