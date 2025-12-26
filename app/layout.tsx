@@ -3,6 +3,7 @@ import Script from "next/script";
 import { IBM_Plex_Sans } from "next/font/google";
 
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -12,9 +13,42 @@ const plexSans = IBM_Plex_Sans({
   weight: ["400", "500", "600", "700"]
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  title: "Tahoe Chain Control",
-  description: "Live chain control updates for Bay Area and Lake Tahoe travel."
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Tahoe Chain Control",
+    template: "%s | Tahoe Chain Control"
+  },
+  description: "Live chain control updates for Bay Area and Lake Tahoe travel.",
+  alternates: {
+    canonical: "/"
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    title: "Tahoe Chain Control",
+    description: "Live chain control updates for Bay Area and Lake Tahoe travel.",
+    siteName: "Tahoe Chain Control",
+    locale: "en_US"
+  },
+  twitter: {
+    card: "summary",
+    title: "Tahoe Chain Control",
+    description: "Live chain control updates for Bay Area and Lake Tahoe travel."
+  }
 };
 
 export default function RootLayout({
