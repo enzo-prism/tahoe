@@ -16,6 +16,12 @@ const plexSans = IBM_Plex_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  icons: {
+    icon: [
+      { url: "/favicon small.png", sizes: "32x32", type: "image/png" },
+      { url: "/Favicon large.png", sizes: "256x256", type: "image/png" }
+    ]
+  },
   robots: {
     index: true,
     follow: true,
