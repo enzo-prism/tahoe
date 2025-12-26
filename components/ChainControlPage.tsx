@@ -174,7 +174,7 @@ function AboutDataDetails({ className }: { className?: string }) {
 export default function ChainControlPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = React.useState<ViewMode>("summary");
+  const [viewMode, setViewMode] = React.useState<ViewMode>("map");
   const [vehicleMode, setVehicleMode] = React.useState<VehicleMode>("car");
   const [showTruckAdvisories, setShowTruckAdvisories] = React.useState(false);
   const [routeFilter, setRouteFilter] = React.useState<RouteFilter>("All");
