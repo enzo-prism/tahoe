@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { IBM_Plex_Sans } from "next/font/google";
+import { Suspense } from "react";
 
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { getSiteUrl } from "@/lib/site";
@@ -83,7 +84,9 @@ export default function RootLayout({
             })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
           `}
         </Script>
-        <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
         {children}
       </body>
     </html>
