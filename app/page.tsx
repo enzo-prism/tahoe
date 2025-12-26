@@ -199,6 +199,7 @@ function PageContent() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isMapControlsOpen, setIsMapControlsOpen] = React.useState(false);
   const [stalePointNotice, setStalePointNotice] = React.useState<string | null>(null);
+  const hasForcedRefresh = React.useRef(false);
   const mapStyle = getMapStyleUrl();
 
   React.useEffect(() => {
@@ -214,12 +215,19 @@ function PageContent() {
     router.replace(`?${params.toString()}`, { scroll: false });
   }, [router, searchParams, vehicleMode]);
 
-  const fetchData = React.useCallback(async () => {
+  const fetchData = React.useCallback(async (options: { forceFresh?: boolean } = {}) => {
+    const shouldForceFresh = options.forceFresh ?? !hasForcedRefresh.current;
+    if (!hasForcedRefresh.current) {
+      hasForcedRefresh.current = true;
+    }
     setIsRefreshing(true);
     try {
-      const response = await fetch("/api/chain-controls", {
-        cache: "no-store"
-      });
+      const response = await fetch(
+        shouldForceFresh ? "/api/chain-controls?fresh=1" : "/api/chain-controls",
+        {
+          cache: "no-store"
+        }
+      );
       if (!response.ok) {
         throw new Error("Feed unavailable");
       }
@@ -234,6 +242,10 @@ function PageContent() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleManualRefresh = React.useCallback(() => {
+    fetchData({ forceFresh: true });
+  }, [fetchData]);
 
   React.useEffect(() => {
     fetchData();
@@ -488,7 +500,12 @@ function PageContent() {
                 <AboutDataDetails className="text-sm" />
               </SheetContent>
             </Sheet>
-            <Button variant="secondary" size="sm" onClick={fetchData} disabled={isRefreshing}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
               {isRefreshing ? "Refreshing..." : "Refresh now"}
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -607,7 +624,7 @@ function PageContent() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={fetchData}
+                          onClick={handleManualRefresh}
                           disabled={isRefreshing}
                         >
                           {isRefreshing ? "Refreshing..." : "Refresh now"}
@@ -687,7 +704,12 @@ function PageContent() {
                       </div>
                     ))}
                   </RadioGroup>
-                  <Button variant="secondary" size="sm" onClick={fetchData} disabled={isRefreshing}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                  >
                     {isRefreshing ? "Refreshing..." : "Refresh now"}
                   </Button>
                   {vehicleMode === "car" ? (

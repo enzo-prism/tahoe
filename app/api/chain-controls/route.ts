@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { normalizeFeed } from "@/lib/chainControls";
@@ -12,13 +13,16 @@ const DISTRICT_FEEDS = [
 
 const FETCH_TIMEOUT_MS = 8000;
 
-async function fetchWithTimeout(url: string): Promise<CaltransFeed> {
+async function fetchWithTimeout(
+  url: string,
+  forceFresh: boolean
+): Promise<CaltransFeed> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
-      next: { revalidate: 60 },
+      ...(forceFresh ? { cache: "no-store" as const } : { next: { revalidate: 60 } }),
       signal: controller.signal
     });
 
@@ -32,9 +36,16 @@ async function fetchWithTimeout(url: string): Promise<CaltransFeed> {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const forceFresh = searchParams.get("fresh") === "1";
+
+  if (forceFresh) {
+    noStore();
+  }
+
   const results = await Promise.allSettled(
-    DISTRICT_FEEDS.map((url) => fetchWithTimeout(url))
+    DISTRICT_FEEDS.map((url) => fetchWithTimeout(url, forceFresh))
   );
 
   const feeds = results
@@ -49,13 +60,13 @@ export async function GET() {
     points
   };
 
+  const headers = forceFresh
+    ? { "Cache-Control": "no-store" }
+    : { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60" };
+
   if (feeds.length === 0) {
-    return NextResponse.json(payload, { status: 502 });
+    return NextResponse.json(payload, { status: 502, headers });
   }
 
-  return NextResponse.json(payload, {
-    headers: {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=60"
-    }
-  });
+  return NextResponse.json(payload, { headers });
 }

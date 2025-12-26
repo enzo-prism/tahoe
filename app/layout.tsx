@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { IBM_Plex_Sans } from "next/font/google";
 
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -23,6 +25,31 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn("min-h-screen bg-background text-foreground", plexSans.className)}>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-9EZFQCP5X1"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9EZFQCP5X1');
+          `}
+        </Script>
+        <Script id="hotjar" strategy="afterInteractive">
+          {`
+            (function(h,o,t,j,a,r){
+                h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+                h._hjSettings={hjid:6608803,hjsv:6};
+                a=o.getElementsByTagName('head')[0];
+                r=o.createElement('script');r.async=1;
+                r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+                a.appendChild(r);
+            })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+          `}
+        </Script>
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
