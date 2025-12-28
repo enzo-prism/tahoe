@@ -932,6 +932,17 @@ export default function ChainControlPage({
             </Card>
           </TabsContent>
         </Tabs>
+
+        <footer className="flex justify-center pb-4 pt-2 text-[0.65rem] text-muted-foreground/70">
+          <a
+            href="https://www.design-prism.com"
+            target="_blank"
+            rel="noreferrer"
+            className="underline-offset-4 transition hover:text-muted-foreground hover:underline"
+          >
+            engineered by prism in silicon valley
+          </a>
+        </footer>
       </div>
     </main>
   );
